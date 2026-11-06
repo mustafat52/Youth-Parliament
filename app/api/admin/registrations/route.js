@@ -2,12 +2,13 @@ import { getSupabase } from "@/lib/supabase";
 import { isAdmin } from "@/lib/adminAuth";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function GET() {
   if (!isAdmin()) return Response.json({ error: "Not signed in." }, { status: 401 });
   const sb = getSupabase();
   const [regs, pols] = await Promise.all([
-    sb.from("registrations").select("*, politicians(name, party, constituency)").order("created_at", { ascending: false }),
+    sb.from("registrations").select("*, politicians(name, party, constituency), schools(name, slug)").order("created_at", { ascending: false }),
     sb.from("politicians").select("id", { count: "exact", head: true }),
   ]);
   if (regs.error) return Response.json({ error: "Could not load registrations." }, { status: 500 });

@@ -5,7 +5,7 @@ Next.js (Vercel) + Supabase. One politician can be claimed by one student only (
 ## 1. Supabase
 1. Create a free project at supabase.com.
 2. Open SQL Editor > New query, paste `supabase/schema.sql`, and run it.
-3. Edit the last `insert` in that file first to add your real politician names and parties.
+3. The file already contains the 150 Lok Sabha members from your PDF (name, party, constituency, role). Edit the final `insert` first if you want a different list.
 4. Project Settings > API: copy the **Project URL** and the **service_role** key.
 
 ## 2. Run locally

@@ -239,3 +239,37 @@ tbody tr:hover { background: #f8f9fd; }
 .rcard .person { margin-bottom: 8px; }
 .rcard .pol { color: var(--ink); }
 @media (min-width: 640px) { .toolbar { grid-template-columns: 1fr 150px 130px auto auto; } .welcome { padding: 22px 24px; } }
+
+/* School pill on the registration page */
+.schoolpill { display: inline-block; margin: 4px auto 6px; padding: 6px 16px; font-size: 1rem; color: var(--ink); background: #f2c27a; border-radius: 999px; }
+
+/* Schools admin */
+.anchor { scroll-margin-top: 12px; }
+.newschool { display: grid; gap: 12px; grid-template-columns: 1fr; align-items: end; }
+.newschool .btn.small { width: 100%; }
+.newschool code, .hint code { background: #e9edf6; padding: 2px 6px; border-radius: 4px; word-break: break-all; }
+.schoolgrid { display: grid; gap: 12px; grid-template-columns: 1fr; }
+.scard { border: 1px solid var(--line); border-radius: 12px; padding: 14px; background: #fcfcfe; }
+.shead { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+.shead h3 { font-size: 1.1rem; }
+.spill { flex: 0 0 auto; padding: 2px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: 700; }
+.spill.open { background: #dff3e8; color: var(--green); }
+.spill.closed { background: #fdecea; color: var(--error); }
+.linkrow { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.linkrow code { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; font-size: 0.85rem; background: #e9edf6; padding: 6px 8px; border-radius: 6px; }
+.copybtn { flex: 0 0 auto; min-height: 36px; padding: 0 14px; font: inherit; font-weight: 700; color: #fff; background: var(--ink); border: 0; border-radius: 8px; cursor: pointer; }
+.sactions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.mini { display: inline-flex; align-items: center; justify-content: center; min-height: 38px; padding: 0 14px; font: inherit; font-size: 0.92rem; font-weight: 600; color: var(--ink); background: #fff; border: 1.5px solid #9aa3b8; border-radius: 8px; text-decoration: none; cursor: pointer; }
+.mini:hover { border-color: var(--ink); }
+.mini.dangerm { color: var(--error); border-color: var(--error); }
+.toolbar2 { display: flex; flex-wrap: wrap; gap: 10px; }
+.toolbar2 .search { flex: 1 1 160px; min-width: 0; width: auto; margin: 0; }
+.toolbar2 .search.grow { flex: 2 1 240px; }
+.toolbar2 .btn.small { flex: 1 1 130px; padding: 0 20px; }
+.schooltag { font-weight: 700; color: var(--saffron); }
+@media (min-width: 640px) {
+  .newschool { grid-template-columns: 1.3fr 1fr auto; }
+  .newschool .btn.small { width: auto; }
+  .schoolgrid { grid-template-columns: 1fr 1fr; }
+  .toolbar2 .btn.small { flex: 0 0 auto; }
+}

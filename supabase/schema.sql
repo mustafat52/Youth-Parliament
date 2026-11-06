@@ -3,45 +3,194 @@
 create table politicians (
   id serial primary key,
   name text unique not null,
-  party text
+  party text,
+  constituency text,
+  role text
+);
+
+create table schools (
+  id serial primary key,
+  name text not null,
+  slug text unique not null,
+  is_open boolean not null default true,
+  created_at timestamptz default now()
 );
 
 create table registrations (
   id uuid primary key default gen_random_uuid(),
+  school_id int not null references schools(id) on delete cascade,
   full_name text not null,
-  enrollment_no text unique not null,
-  email text unique not null,
+  enrollment_no text not null,
+  email text not null,
   phone text not null,
   course text not null,
   year text not null,
-  politician_id int unique not null references politicians(id),
-  created_at timestamptz default now()
+  politician_id int not null references politicians(id),
+  created_at timestamptz default now(),
+  constraint reg_school_politician_key unique (school_id, politician_id),
+  constraint reg_school_email_key unique (school_id, email),
+  constraint reg_school_enrollment_key unique (school_id, enrollment_no)
 );
 
 -- Lock the tables. Only the server (service role key) can read or write.
 alter table politicians enable row level security;
+alter table schools enable row level security;
 alter table registrations enable row level security;
 
--- Shows every politician and whether someone has already picked them
-create view politician_status as
-select p.id, p.name, p.party,
-       exists (select 1 from registrations r where r.politician_id = p.id) as taken
-from politicians p
-order by p.name;
+grant usage on schema public to service_role;
+grant all on all tables in schema public to service_role;
+grant all on all sequences in schema public to service_role;
 
-
-
-revoke all on politician_status from anon, authenticated;
-
-
-
--- Replace these placeholders with your real list
-insert into politicians (name, party) values
-  ('Politician One', 'Party A'),
-  ('Politician Two', 'Party B'),
-  ('Politician Three', 'Party C'),
-  ('Politician Four', 'Party D'),
-  ('Politician Five', 'Party E'),
-  ('Politician Six', 'Party F');
-
-
+-- 150 prominent members of the 18th Lok Sabha (from your PDF).
+-- Add, remove or edit rows here before running if you want a different list.
+insert into politicians (name, party, constituency, role) values
+  ('Narendra Modi', 'BJP', 'Varanasi', 'Prime Minister'),
+  ('Rajnath Singh', 'BJP', 'Lucknow', 'Defence'),
+  ('Amit Shah', 'BJP', 'Gandhinagar', 'Home'),
+  ('Nitin Gadkari', 'BJP', 'Nagpur', null),
+  ('Shivraj Singh Chouhan', 'BJP', 'Vidisha', null),
+  ('Manohar Lal Khattar', 'BJP', 'Karnal', null),
+  ('Piyush Goyal', 'BJP', 'Mumbai North', null),
+  ('Dharmendra Pradhan', 'BJP', 'Sambalpur', null),
+  ('Jyotiraditya Scindia', 'BJP', 'Guna', null),
+  ('Kiren Rijiju', 'BJP', 'Arunachal West', 'Parliamentary Affairs'),
+  ('Mansukh Mandaviya', 'BJP', 'Porbandar', null),
+  ('Bhupender Yadav', 'BJP', 'Alwar', null),
+  ('Gajendra Singh Shekhawat', 'BJP', 'Jodhpur', null),
+  ('G. Kishan Reddy', 'BJP', 'Secunderabad', null),
+  ('Giriraj Singh', 'BJP', 'Begusarai', null),
+  ('Sarbananda Sonowal', 'BJP', 'Dibrugarh', null),
+  ('Pralhad Joshi', 'BJP', 'Dharwad', null),
+  ('C.R. Patil', 'BJP', 'Navsari', null),
+  ('Arjun Ram Meghwal', 'BJP', 'Bikaner', null),
+  ('Annapurna Devi', 'BJP', 'Koderma', null),
+  ('Pankaj Chaudhary', 'BJP', 'Maharajganj', null),
+  ('Bandi Sanjay Kumar', 'BJP', 'Karimnagar', null),
+  ('Rao Inderjit Singh', 'BJP', 'Gurgaon', null),
+  ('Om Birla', 'BJP', 'Kota', 'Speaker'),
+  ('Anurag Thakur', 'BJP', 'Hamirpur', null),
+  ('Ravi Shankar Prasad', 'BJP', 'Patna Sahib', null),
+  ('Rajiv Pratap Rudy', 'BJP', 'Saran', null),
+  ('Hema Malini', 'BJP', 'Mathura', null),
+  ('Kangana Ranaut', 'BJP', 'Mandi', null),
+  ('Sambit Patra', 'BJP', 'Puri', null),
+  ('Tejasvi Surya', 'BJP', 'Bangalore South', null),
+  ('Nishikant Dubey', 'BJP', 'Godda', null),
+  ('Bansuri Swaraj', 'BJP', 'New Delhi', null),
+  ('Manoj Tiwari', 'BJP', 'North East Delhi', null),
+  ('Ravi Kishan', 'BJP', 'Gorakhpur', null),
+  ('Suresh Gopi', 'BJP', 'Thrissur', null),
+  ('Basavaraj Bommai', 'BJP', 'Haveri', null),
+  ('Sukanta Majumdar', 'BJP', 'Balurghat', null),
+  ('Biplab Kumar Deb', 'BJP', 'Tripura West', null),
+  ('Aparajita Sarangi', 'BJP', 'Bhubaneswar', null),
+  ('Jagdambika Pal', 'BJP', 'Domariyaganj', null),
+  ('Radha Mohan Singh', 'BJP', 'Purvi Champaran', null),
+  ('Shobha Karandlaje', 'BJP', 'Bangalore North', null),
+  ('K. Ram Mohan Naidu', 'TDP', 'Srikakulam', null),
+  ('Pemmasani Chandra Sekhar', 'TDP', 'Guntur', null),
+  ('Lavu Sri Krishna Devarayalu', 'TDP', 'Narasaraopet', null),
+  ('Rajiv Ranjan "Lalan" Singh', 'JD(U)', 'Munger', null),
+  ('Chirag Paswan', 'LJP (Ram Vilas)', 'Hajipur', null),
+  ('Shambhavi Choudhary', 'LJP (Ram Vilas)', 'Samastipur', null),
+  ('Jitan Ram Manjhi', 'HAM', 'Gaya', null),
+  ('H.D. Kumaraswamy', 'JD(S)', 'Mandya', null),
+  ('Shrikant Shinde', 'Shiv Sena', 'Kalyan', null),
+  ('Rahul Gandhi', 'INC', 'Rae Bareli', 'Leader of the Opposition'),
+  ('Priyanka Gandhi Vadra', 'INC', 'Wayanad', null),
+  ('Shashi Tharoor', 'INC', 'Thiruvananthapuram', null),
+  ('K.C. Venugopal', 'INC', 'Alappuzha', null),
+  ('Gaurav Gogoi', 'INC', 'Jorhat', null),
+  ('Manickam Tagore', 'INC', 'Virudhunagar', null),
+  ('Karti Chidambaram', 'INC', 'Sivaganga', null),
+  ('Charanjit Singh Channi', 'INC', 'Jalandhar', null),
+  ('Sukhjinder Randhawa', 'INC', 'Gurdaspur', null),
+  ('Kodikunnil Suresh', 'INC', 'Mavelikkara', null),
+  ('Deepender Hooda', 'INC', 'Rohtak', null),
+  ('Kumari Selja', 'INC', 'Sirsa', null),
+  ('Bhupesh Baghel', 'INC', 'Rajnandgaon', null),
+  ('Imran Masood', 'INC', 'Saharanpur', null),
+  ('Praniti Shinde', 'INC', 'Solapur', null),
+  ('Varsha Gaikwad', 'INC', 'Mumbai North Central', null),
+  ('Sasikanth Senthil', 'INC', 'Tiruvallur', null),
+  ('Sanjana Jatav', 'INC', 'Bharatpur', null),
+  ('Hibi Eden', 'INC', 'Ernakulam', null),
+  ('Shafi Parambil', 'INC', 'Vadakara', null),
+  ('Akhilesh Yadav', 'SP', 'Kannauj', null),
+  ('Dimple Yadav', 'SP', 'Mainpuri', null),
+  ('Awadhesh Prasad', 'SP', 'Faizabad', null),
+  ('Dharmendra Yadav', 'SP', 'Azamgarh', null),
+  ('Afzal Ansari', 'SP', 'Ghazipur', null),
+  ('Iqra Hasan', 'SP', 'Kairana', null),
+  ('Abhishek Banerjee', 'TMC', 'Diamond Harbour', null),
+  ('Mahua Moitra', 'TMC', 'Krishnanagar', null),
+  ('Kalyan Banerjee', 'TMC', 'Sreerampur', null),
+  ('Sudip Bandyopadhyay', 'TMC', 'Kolkata Uttar', null),
+  ('Yusuf Pathan', 'TMC', 'Baharampur', null),
+  ('Kirti Azad', 'TMC', 'Bardhaman-Durgapur', null),
+  ('Shatrughan Sinha', 'TMC', 'Asansol', null),
+  ('Saugata Roy', 'TMC', 'Dum Dum', null),
+  ('Kanimozhi', 'DMK', 'Thoothukudi', null),
+  ('T.R. Baalu', 'DMK', 'Sriperumbudur', null),
+  ('A. Raja', 'DMK', 'Nilgiris', null),
+  ('Dayanidhi Maran', 'DMK', 'Chennai Central', null),
+  ('Thol. Thirumavalavan', 'VCK', 'Chidambaram', null),
+  ('Supriya Sule', 'NCP (SP)', 'Baramati', null),
+  ('Arvind Sawant', 'Shiv Sena (UBT)', 'Mumbai South', null),
+  ('Asaduddin Owaisi', 'AIMIM', 'Hyderabad', null),
+  ('Harsimrat Kaur Badal', 'SAD', 'Bathinda', null),
+  ('Engineer Rashid', 'Independent', 'Baramulla', null),
+  ('Chandrashekhar Azad', 'Azad Samaj Party (Kanshi Ram)', 'Nagina', null),
+  ('Pappu Yadav', 'Independent', 'Purnia', null),
+  ('Hanuman Beniwal', 'RLP', 'Nagaur', null),
+  ('Agha Ruhullah Mehdi', 'National Conference', 'Srinagar', null),
+  ('Nityanand Rai', 'BJP', 'Ujiarpur', null),
+  ('Jitin Prasada', 'BJP', 'Pilibhit', null),
+  ('Kirti Vardhan Singh', 'BJP', 'Gonda', null),
+  ('Kamlesh Paswan', 'BJP', 'Bansgaon', null),
+  ('B.L. Verma', 'BJP', 'Badaun', null),
+  ('Raksha Khadse', 'BJP', 'Raver', null),
+  ('Murlidhar Mohol', 'BJP', 'Pune', null),
+  ('Sanjay Seth', 'BJP', 'Ranchi', null),
+  ('Harsh Malhotra', 'BJP', 'East Delhi', null),
+  ('Savitri Thakur', 'BJP', 'Dhar', null),
+  ('Durgadas Uikey', 'BJP', 'Betul', null),
+  ('Jual Oram', 'BJP', 'Sundargarh', null),
+  ('Bhartruhari Mahtab', 'BJP', 'Cuttack', 'Pro-tem Speaker in 2024'),
+  ('Sakshi Maharaj', 'BJP', 'Unnao', null),
+  ('Mahesh Sharma', 'BJP', 'Gautam Buddha Nagar', null),
+  ('Trivendra Singh Rawat', 'BJP', 'Haridwar', null),
+  ('Anil Baluni', 'BJP', 'Garhwal', null),
+  ('Narayan Rane', 'BJP', 'Ratnagiri-Sindhudurg', null),
+  ('Udayanraje Bhosale', 'BJP', 'Satara', null),
+  ('Jagadish Shettar', 'BJP', 'Belgaum', null),
+  ('P.C. Mohan', 'BJP', 'Bangalore Central', null),
+  ('Brijesh Chowta', 'BJP', 'Dakshina Kannada', null),
+  ('K. Sudhakar', 'BJP', 'Chikkaballapur', null),
+  ('D. Purandeswari', 'BJP', 'Rajahmundry', null),
+  ('Sanjay Jaiswal', 'BJP', 'Paschim Champaran', null),
+  ('Anupriya Patel', 'Apna Dal (Sonelal)', 'Mirzapur', null),
+  ('Prataprao Jadhav', 'Shiv Sena', 'Buldhana', null),
+  ('Vallabhaneni Balashowry', 'Jana Sena Party', 'Machilipatnam', null),
+  ('Manish Tewari', 'INC', 'Chandigarh', null),
+  ('Amarinder Singh Raja Warring', 'INC', 'Ludhiana', null),
+  ('Gurjeet Singh Aujla', 'INC', 'Amritsar', null),
+  ('Tariq Anwar', 'INC', 'Katihar', null),
+  ('Jothimani', 'INC', 'Karur', null),
+  ('Vijay Vasanth', 'INC', 'Kanniyakumari', null),
+  ('K. Sudhakaran', 'INC', 'Kannur', null),
+  ('Dean Kuriakose', 'INC', 'Idukki', null),
+  ('Anto Antony', 'INC', 'Pathanamthitta', null),
+  ('Rakibul Hussain', 'INC', 'Dhubri', null),
+  ('Priya Saroj', 'SP', 'Machhlishahr', null),
+  ('Zia ur Rehman Barq', 'SP', 'Sambhal', null),
+  ('Mohibbullah Nadvi', 'SP', 'Rampur', null),
+  ('Sayani Ghosh', 'TMC', 'Jadavpur', null),
+  ('Kakoli Ghosh Dastidar', 'TMC', 'Barasat', null),
+  ('Dev (Deepak Adhikari)', 'TMC', 'Ghatal', null),
+  ('Satabdi Roy', 'TMC', 'Birbhum', null),
+  ('Mala Roy', 'TMC', 'Kolkata Dakshin', null),
+  ('Su. Venkatesan', 'CPI(M)', 'Madurai', null),
+  ('K. Radhakrishnan', 'CPI(M)', 'Alathur', null),
+  ('Meet Hayer', 'AAP', 'Sangrur', null),
+  ('Mian Altaf Ahmad', 'National Conference', 'Anantnag-Rajouri', null);
