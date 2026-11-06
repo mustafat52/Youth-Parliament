@@ -4,6 +4,12 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 const PAGE = 24;
 const partyOf = (p) => p.party || "Other";
 
+const partyColor = (name = "") => {
+  let h = 0;
+  for (const ch of name) h = (h * 31 + ch.charCodeAt(0)) % 360;
+  return `hsl(${h}, 60%, 42%)`;
+};
+
 const EMPTY = {
   full_name: "", enrollment_no: "", email: "", phone: "",
   course: "", year: "", politician_id: "", website: "",
@@ -118,6 +124,10 @@ export default function Home() {
   return (
     <>
       <header className="hero">
+        <div className="logobadge">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img className="logo" src="/itm-logo.png" alt="ITM University logo" />
+        </div>
         <div className="uni">ITM University, Raipur</div>
         <h1>Youth Parliament Registration</h1>
         <p>Fill in your details and claim the politician you will represent. Each politician can be chosen by one student only.</p>
@@ -215,22 +225,32 @@ export default function Home() {
                 </div>
               )}
 
-              <fieldset className="tiles" style={{ minInlineSize: 0 }}>
+                            <fieldset className="plist" style={{ minInlineSize: 0 }}>
                 <legend className="ghost">Politician</legend>
                 {visible.map((p) => (
-                  <label className="tile" key={p.id}>
+                  <label className="pcard" key={p.id}>
                     <input type="radio" name="politician" value={p.id} disabled={p.taken}
                       checked={String(form.politician_id) === String(p.id)} onChange={set("politician_id")} />
-                    <span className="box">
-                      <span>
-                        <span className="nm">{p.name}</span>
-                        <span className="pt">{[p.role, p.party, p.constituency].filter(Boolean).join(" | ")}</span>
+                    <span className="pbox">
+                      <span className="radio" aria-hidden="true" />
+                      <span className="pinfo">
+                        {p.role && <span className="prole">{p.role}</span>}
+                        <span className="pname">{p.name}</span>
+                        <span className="pmeta">
+                          {p.party && (
+                            <span className="pparty">
+                              <i className="pdot" style={{ background: partyColor(p.party) }} />{p.party}
+                            </span>
+                          )}
+                          {p.constituency && <span>{p.constituency}</span>}
+                        </span>
                       </span>
-                      <span className="tag">{p.taken ? "Taken" : form.politician_id == p.id ? "Selected" : "Available"}</span>
+                      {p.taken && <span className="ptaken">Taken</span>}
                     </span>
                   </label>
                 ))}
               </fieldset>
+
               {shown.length > limit && (
                 <button type="button" className="more" onClick={() => setLimit((l) => l + PAGE)}>
                   Show more ({shown.length - limit} left)
