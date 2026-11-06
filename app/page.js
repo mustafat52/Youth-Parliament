@@ -1,6 +1,9 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+const PAGE = 24;
+const partyOf = (p) => p.party || "Other";
+
 const EMPTY = {
   full_name: "", enrollment_no: "", email: "", phone: "",
   course: "", year: "", politician_id: "", website: "",
@@ -38,6 +41,9 @@ export default function Home() {
   const [list, setList] = useState([]);
   const [loaded, setLoaded] = useState(false);
   const [query, setQuery] = useState("");
+  const [party, setParty] = useState("");
+  const [onlyFree, setOnlyFree] = useState(false);
+  const [limit, setLimit] = useState(PAGE);
   const [msg, setMsg] = useState("");
   const [done, setDone] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -58,9 +64,29 @@ export default function Home() {
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const takenCount = list.filter((p) => p.taken).length;
-  const shown = list.filter((p) =>
-    ([p.name, p.party, p.constituency, p.role].join(" ")).toLowerCase().includes(query.trim().toLowerCase())
-  );
+
+  const partyList = useMemo(() => {
+    const m = {};
+    list.forEach((p) => {
+      const k = partyOf(p);
+      m[k] = m[k] || { total: 0, free: 0 };
+      m[k].total += 1;
+      if (!p.taken) m[k].free += 1;
+    });
+    return Object.entries(m).sort((a, b) => b[1].total - a[1].total || a[0].localeCompare(b[0]));
+  }, [list]);
+  const topParties = partyList.slice(0, 5);
+  const otherParties = partyList.slice(5);
+
+  const shown = list.filter((p) => {
+    if (party && partyOf(p) !== party) return false;
+    if (onlyFree && p.taken) return false;
+    return [p.name, p.party, p.constituency, p.role].join(" ").toLowerCase().includes(query.trim().toLowerCase());
+  });
+  const visible = shown.slice(0, limit);
+  const chosen = list.find((p) => String(p.id) === String(form.politician_id));
+
+  const pickParty = (v) => { setParty(v); setLimit(PAGE); };
 
   async function submit(e) {
     e.preventDefault();
@@ -153,12 +179,45 @@ export default function Home() {
 
             <section className="panel">
               <h2>Choose your politician</h2>
-              <p className="hint">Greyed names are already taken. The list updates automatically.</p>
-              <input className="search" type="search" placeholder="Search by name, party or constituency" aria-label="Search politicians"
-                value={query} onChange={(e) => setQuery(e.target.value)} />
+              <p className="hint">Greyed names are already taken. The list updates automatically. Numbers show seats still free.</p>
+
+              <div className="chips" role="group" aria-label="Filter by party">
+                <button type="button" className="chip" aria-pressed={party === ""} onClick={() => pickParty("")}>
+                  All <span>{list.length - takenCount}</span>
+                </button>
+                {topParties.map(([name, c]) => (
+                  <button type="button" key={name} className="chip" aria-pressed={party === name} onClick={() => pickParty(name)}>
+                    {name} <span>{c.free}</span>
+                  </button>
+                ))}
+                {otherParties.length > 0 && (
+                  <select className="chip chipselect" aria-label="Other parties"
+                    value={otherParties.some(([n]) => n === party) ? party : ""} onChange={(e) => pickParty(e.target.value)}>
+                    <option value="">Other parties...</option>
+                    {otherParties.map(([name, c]) => <option key={name} value={name}>{name} ({c.free})</option>)}
+                  </select>
+                )}
+              </div>
+
+              <div className="filterrow">
+                <input className="search" type="search" placeholder="Search by name or constituency" aria-label="Search politicians"
+                  value={query} onChange={(e) => { setQuery(e.target.value); setLimit(PAGE); }} />
+                <label className="check">
+                  <input type="checkbox" checked={onlyFree} onChange={(e) => { setOnlyFree(e.target.checked); setLimit(PAGE); }} />
+                  Show available only
+                </label>
+              </div>
+
+              {chosen && (
+                <div className="picked" aria-live="polite">
+                  Your choice: <b>{chosen.name}</b>{chosen.party ? ` (${chosen.party})` : ""}
+                  <button type="button" className="linkclear" onClick={() => setForm((f) => ({ ...f, politician_id: "" }))}>Clear</button>
+                </div>
+              )}
+
               <fieldset className="tiles" style={{ minInlineSize: 0 }}>
                 <legend className="ghost">Politician</legend>
-                {shown.map((p) => (
+                {visible.map((p) => (
                   <label className="tile" key={p.id}>
                     <input type="radio" name="politician" value={p.id} disabled={p.taken}
                       checked={String(form.politician_id) === String(p.id)} onChange={set("politician_id")} />
@@ -172,6 +231,11 @@ export default function Home() {
                   </label>
                 ))}
               </fieldset>
+              {shown.length > limit && (
+                <button type="button" className="more" onClick={() => setLimit((l) => l + PAGE)}>
+                  Show more ({shown.length - limit} left)
+                </button>
+              )}
               {loaded && shown.length === 0 && <p className="empty">{list.length ? "No politician matches your search." : "No politicians have been added yet."}</p>}
               {loaded && list.length > 0 && takenCount === list.length && <p className="empty">All seats are filled. Registration is full.</p>}
             </section>
